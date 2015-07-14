@@ -200,7 +200,7 @@ if (class_exists("GFForms") && !class_exists('AgileGFAddon')) {
             $responseJson['markup'] .= '<table class="form-table"><tbody><tr valign="top">'
                 . '<th scope="row" style="width: 136px;">Tag</th>'
                 . '<td><input type="text" name="agilecrm_gf_form_map[hard_tag]" id="agilecrm_form_field_hard_tag"><br>'
-                . '<small>Tag name can not have special characters except space and underscore.</small></td>'
+                . '<small>Tag name should start with an alphabet and can not contain special characters other than space and underscore.</small></td>'
                 . '</tr></tbody></table>';
 
             echo json_encode($responseJson);
@@ -241,8 +241,7 @@ if (class_exists("GFForms") && !class_exists('AgileGFAddon')) {
                 }
 
                 if (isset($formFields['form_' . $agilecrm_form_sync_id]['hard_tag']) && $formFields['form_' . $agilecrm_form_sync_id]['hard_tag'] != '') {
-                    $formFields['form_' . $agilecrm_form_sync_id]['hard_tag'] = mb_ereg_replace('[^ \w]+', '', $formFields['form_' . $agilecrm_form_sync_id]['hard_tag']);
-                    $formFields['form_' . $agilecrm_form_sync_id]['hard_tag'] = preg_replace('!\s+!', ' ', $formFields['form_' . $agilecrm_form_sync_id]['hard_tag']);
+                    $formFields['form_' . $agilecrm_form_sync_id]['hard_tag'] = trim($formFields['form_' . $agilecrm_form_sync_id]['hard_tag']);
                 }
 
                 $update = update_option('agilecrm_gf_form_map', $formFields);
@@ -316,11 +315,22 @@ if (class_exists("GFForms") && !class_exists('AgileGFAddon')) {
                         $finalData['tags'] = array();
 
                         if ($mappedFields["tags"] != '') {
-                            $finalData['tags'][] = preg_replace('!\s+!', ' ', mb_ereg_replace('[^ \w]+', '', $entry[$mappedFields['tags']]));
+                            if (AgileGFAddon::startsWithNumber($mappedFields["tags"])) {
+                                $entry[$mappedFields['tags']] = preg_replace('/[0-9]+/', '', mb_ereg_replace('[^ \w]+', '', $entry[$mappedFields['tags']]));
+                            }
+                            $finalData['tags'][] = preg_replace('!\s+!', ' ', mb_ereg_replace('[^ \w]+', '', trim($entry[$mappedFields['tags']])));
                         }
                         if ($mappedFields["hard_tag"] != '') {
-                            $finalData['tags'][] = $mappedFields['hard_tag'];
+                            $hardTags = explode(",", trim($mappedFields['hard_tag']));
+                            foreach ($hardTags as $hTag) {
+                                if (AgileGFAddon::startsWithNumber($hTag)) {
+                                    $finalData['tags'][] = preg_replace('/[0-9]+/', '', mb_ereg_replace('[^ \w]+', '', trim($hTag)));
+                                } else {
+                                    $finalData['tags'][] = preg_replace('!\s+!', ' ', mb_ereg_replace('[^ \w]+', '', trim($hTag)));
+                                }
+                            }
                         }
+                        $finalData['tags'] = array_filter($finalData['tags']);
 
                         if (isset($entry[$mappedFields['email']]) && $entry[$mappedFields['email']] != '') {
                             $resultedContact = array();
@@ -334,6 +344,9 @@ if (class_exists("GFForms") && !class_exists('AgileGFAddon')) {
                                         $resultedContact['tags'][] = $ntag;
                                     }
                                     $resultedContact['tags'] = array_unique($resultedContact['tags']);
+                                    if ($resultedContact['tags']) {
+                                        $resultedContact['tags'] = array_values($resultedContact['tags']);
+                                    }
 
                                     foreach ($finalData['properties'] as $prop) {
                                         foreach ($resultedContact['properties'] as $oldkey => $oldprop) {
@@ -459,6 +472,24 @@ if (class_exists("GFForms") && !class_exists('AgileGFAddon')) {
             $string = str_replace(' ', '-', $string); // Replaces all spaces with hyphens.
             $string = preg_replace('/[^A-Za-z0-9\-]/', '', $string); // Removes special chars.
             return preg_replace('/-+/', '-', $string); // Replaces multiple hyphens with single one.
+        }
+
+        /**
+         * Checks whether a string starts with a number or not
+         * 
+         * @param string
+         * @return boolean TRUE if string starts with a number, FALSE otherwise.
+         */
+        public static function startsWithNumber($str)
+        {
+            if (strlen($str) > 0) {
+                if ($str[0] != null) {
+                    return is_numeric($str[0]);
+                } else {
+                    return is_numeric($str);
+                }
+            }
+            return false;
         }
     }
 
