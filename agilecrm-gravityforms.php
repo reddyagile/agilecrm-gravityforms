@@ -277,7 +277,12 @@ if (class_exists("GFForms") && !class_exists('AgileGFAddon')) {
                                 if (in_array('CUSTOM', $fieldTypeArray)) {
                                     $valueEntered = $entry[$mappedFields[$fieldKey]];
                                     if (isset($fieldTypeArray[1]) && $fieldTypeArray[1] == "DATE") {
-                                        $valueEntered = strtotime($valueEntered);
+                                        /*
+                                          These formats are supported m/d/y, d-m-y, d.m.y, y/m/d, y-m-d
+                                         */
+                                        if ($valueEntered != "") {
+                                            $valueEntered = strtotime($valueEntered . " 12:00:00");
+                                        }
                                     }
                                     $contactProperties[] = array(
                                         "name" => $fieldVal['name'],
