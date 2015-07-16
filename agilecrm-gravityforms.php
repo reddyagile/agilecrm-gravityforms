@@ -351,7 +351,9 @@ if (class_exists("GFForms") && !class_exists('AgileGFAddon')) {
                                     foreach ($finalData['properties'] as $prop) {
                                         foreach ($resultedContact['properties'] as $oldkey => $oldprop) {
                                             if ($oldprop["name"] == $prop["name"]) {
-                                                $resultedContact['properties'][$oldkey]["value"] = $prop["value"];
+                                                if (trim($prop["value"]) != "") {
+                                                    $resultedContact['properties'][$oldkey]["value"] = trim($prop["value"]);
+                                                }
                                             }
                                         }
                                     }
