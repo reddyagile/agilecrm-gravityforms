@@ -3,7 +3,7 @@
   Plugin Name: Gravity Forms Agile CRM Add-On
   Plugin URI: https://www.agilecrm.com/gravity-forms
   Description: Agile CRM integration plugin for gravity forms. Sync form entries to Agile easily.
-  Version: 1.0
+  Version: 1.1
   Requires at least: 4.0
   Tested up to: 4.1
   Author: Agile CRM
@@ -344,27 +344,14 @@ if (class_exists("GFForms") && !class_exists('AgileGFAddon')) {
                                 //replaces long to string, then decode
                                 $resultedContact = json_decode(preg_replace('/("\w+"):(\d+(\.\d+)?)/', '\\1:"\\2"', $isExistsResult), true);
                                 if (isset($resultedContact['id'])) {
-
-                                    foreach ($finalData['tags'] as $ntag) {
-                                        $resultedContact['tags'][] = $ntag;
-                                    }
-                                    $resultedContact['tags'] = array_unique($resultedContact['tags']);
-                                    if ($resultedContact['tags']) {
-                                        $resultedContact['tags'] = array_values($resultedContact['tags']);
-                                    }
-
-                                    foreach ($finalData['properties'] as $prop) {
-                                        foreach ($resultedContact['properties'] as $oldkey => $oldprop) {
-                                            if ($oldprop["name"] == $prop["name"]) {
-                                                if (trim($prop["value"]) != "") {
-                                                    $resultedContact['properties'][$oldkey]["value"] = trim($prop["value"]);
-                                                }
-                                            }
-                                        }
-                                    }
+                                    
+                                    $this->agile_http("contacts/edit/tags", json_encode(array(
+                                        "id" => sprintf('%.0f', $resultedContact['id']),
+                                        "tags" => $finalData['tags']
+                                    )), "PUT");
 
                                     $finalData['id'] = sprintf('%.0f', $resultedContact['id']);
-                                    $this->agile_http("contacts", json_encode($resultedContact), "PUT");
+                                    $this->agile_http("contacts/edit-properties", json_encode($finalData), "PUT");
                                 }
                             } else {
                                 $createdResult = $this->agile_http("contacts", json_encode($finalData), "POST");
