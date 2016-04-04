@@ -138,7 +138,7 @@ if (class_exists("GFForms") && !class_exists('AgileGFAddon')) {
 
             $agileFields = array(
                 'first_name' => array('name' => 'First name', 'is_required' => true, 'type' => 'SYSTEM', 'is_address' => false),
-                'last_name' => array('name' => 'Last name', 'is_required' => true, 'type' => 'SYSTEM', 'is_address' => false),
+                'last_name' => array('name' => 'Last name', 'is_required' => false, 'type' => 'SYSTEM', 'is_address' => false),
                 'company' => array('name' => 'Company', 'is_required' => false, 'type' => 'SYSTEM', 'is_address' => false),
                 'title' => array('name' => 'Job description', 'is_required' => false, 'type' => 'SYSTEM', 'is_address' => false),
                 'tags' => array('name' => 'Tag', 'is_required' => false, 'type' => 'SYSTEM', 'is_address' => false),
@@ -275,7 +275,7 @@ if (class_exists("GFForms") && !class_exists('AgileGFAddon')) {
 
                                 $fieldTypeArray = explode(",", $fieldVal['type']);
                                 if (in_array('CUSTOM', $fieldTypeArray)) {
-                                    $valueEntered = $entry[$mappedFields[$fieldKey]];
+                                    $valueEntered = trim($entry[$mappedFields[$fieldKey]]);
                                     if (isset($fieldTypeArray[1]) && $fieldTypeArray[1] == "DATE") {
                                         /*
                                           These formats are supported m/d/y, d-m-y, d.m.y, y/m/d, y-m-d
@@ -284,22 +284,26 @@ if (class_exists("GFForms") && !class_exists('AgileGFAddon')) {
                                             $valueEntered = strtotime($valueEntered . " 12:00:00");
                                         }
                                     }
-                                    $contactProperties[] = array(
-                                        "name" => $fieldVal['name'],
-                                        "value" => $valueEntered,
-                                        "type" => $fieldTypeArray[0]
-                                    );
+                                    if($valueEntered != "") {
+                                        $contactProperties[] = array(
+                                            "name" => $fieldVal['name'],
+                                            "value" => $valueEntered,
+                                            "type" => $fieldTypeArray[0]
+                                        );   
+                                    }
                                 } elseif (in_array('SYSTEM', $fieldTypeArray)) {
                                     if ($fieldVal['is_address']) {
                                         $addressField = explode("_", $fieldKey);
                                         $addressProp[$addressField[1]] = $entry[$mappedFields[$fieldKey]];
                                     } else {
                                         if ($fieldKey != 'tags' && $fieldKey != 'notes') {
-                                            $contactProperties[] = array(
-                                                "name" => $fieldKey,
-                                                "value" => $entry[$mappedFields[$fieldKey]],
-                                                "type" => $fieldTypeArray[0]
-                                            );
+                                            if($entry[$mappedFields[$fieldKey]] != "") {
+                                                $contactProperties[] = array(
+                                                    "name" => $fieldKey,
+                                                    "value" => $entry[$mappedFields[$fieldKey]],
+                                                    "type" => $fieldTypeArray[0]
+                                                );   
+                                            }
                                         }
                                     }
                                 }
@@ -315,7 +319,7 @@ if (class_exists("GFForms") && !class_exists('AgileGFAddon')) {
                         }
 
                         $finalData = array("properties" => $contactProperties);
-
+                        
                         //tags
                         $finalData['tags'] = array();
 
