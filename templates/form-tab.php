@@ -2,6 +2,9 @@
     <?php $this->plugin_settings_tabs(); ?>
 
     <form method="post" action="#" id="agilecrm_gf_form_map">
+        <?php if (!extension_loaded('curl')) { ?>
+        <div id="warningMsg" style="color: #cc3300; font-weight: bold; padding: 5px 0">Error : cURL library is not loaded. Enable cURL extension in your server to make the plugin work properly.</div>
+        <?php } ?>
 
         <h3 class="title">Select the form to link it with Agile CRM</h3>
 
